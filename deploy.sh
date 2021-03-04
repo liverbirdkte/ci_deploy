@@ -1,5 +1,24 @@
 #!/bin/bash
 
+sudo apt-get remove -y docker docker-engine docker.io containerd runc
+sudo apt-get update -y
+
+sudo apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg
+
+sudo rm /usr/share/keyrings/docker-archive-keyring.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+echo \
+  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update -y
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
 # Download and install kind
 curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.10.0/kind-linux-amd64
 chmod +x ./kind
@@ -13,13 +32,14 @@ kind get clusters
 
 # Install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
 kubectl version --client
 kubectl get nodes -o wide
 
 # Download istioctl
 curl -sL https://istio.io/downloadIstioctl | sh -
-export PATH=$PATH:${PWD}/.istioctl/bin
+export PATH=$PATH:$HOME/.istioctl/bin
 
 # Deploy the operator in istio-operator ns
 # -i istio-system
